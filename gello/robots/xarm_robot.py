@@ -249,12 +249,9 @@ class XArmRobot(Robot):
             # update last state
             self.last_state = self._update_last_state()
             with self.target_command_lock:
-                ###
-                joints_cmd = self.target_command["joints"]
-                # print(joints_cmd)
-                # joints_cmd[3] = 2 * np.pi - joints_cmd[3]
-                ###
-                joint_delta = np.array(joints_cmd - self.last_state.joints())
+                joint_delta = np.array(
+                    self.target_command["joints"] - self.last_state.joints()
+                )
                 gripper_command = self.target_command["gripper"]
 
             norm = np.linalg.norm(joint_delta)
@@ -264,10 +261,6 @@ class XArmRobot(Robot):
                 delta = joint_delta / norm * self.max_delta
             else:
                 delta = joint_delta
-            ###
-            # delta[3] = -delta[3]
-            # delta[3] = 0
-            ###
 
             # command position
             self._set_position(
