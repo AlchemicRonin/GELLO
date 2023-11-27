@@ -249,9 +249,12 @@ class XArmRobot(Robot):
             # update last state
             self.last_state = self._update_last_state()
             with self.target_command_lock:
-                joint_delta = np.array(
-                    self.target_command["joints"] - self.last_state.joints()
-                )
+                ###
+                joints_cmd = self.target_command["joints"]
+                # print(joints_cmd)
+                # joints_cmd[3] = 2 * np.pi - joints_cmd[3]
+                ###
+                joint_delta = np.array(joints_cmd - self.last_state.joints())
                 gripper_command = self.target_command["gripper"]
 
             norm = np.linalg.norm(joint_delta)
@@ -261,6 +264,10 @@ class XArmRobot(Robot):
                 delta = joint_delta / norm * self.max_delta
             else:
                 delta = joint_delta
+            ###
+            # delta[3] = -delta[3]
+            # delta[3] = 0
+            ###
 
             # command position
             self._set_position(
@@ -310,6 +317,12 @@ class XArmRobot(Robot):
             aa = cart_pos[3:]
             cart_pos[:3] /= 1000
 
+            ###
+            prev_angle = servo_angle[:2]
+            extra_angle = np.array([0])
+            next_angle = servo_angle[2:]
+            servo_angle = np.concatenate((prev_angle, extra_angle, next_angle))
+            ###
             return RobotState.from_robot(
                 cart_pos,
                 servo_angle,
@@ -324,6 +337,9 @@ class XArmRobot(Robot):
         if self.robot is None:
             return
         # threhold xyz to be in  min max
+        ###
+        joints = np.concatenate((joints[:2], joints[3:]))
+        ###
         ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
         if ret in [1, 9]:
             self._clear_error_states()
