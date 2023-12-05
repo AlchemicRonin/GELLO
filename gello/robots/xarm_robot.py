@@ -201,7 +201,8 @@ class XArmRobot(Robot):
         self.robot.clean_warn()
         self.robot.motion_enable(True)
         time.sleep(1)
-        self.robot.set_mode(1)
+        # self.robot.set_mode(1)
+        self.robot.set_mode(4)
         time.sleep(1)
         self.robot.set_collision_sensitivity(0)
         time.sleep(1)
@@ -262,10 +263,13 @@ class XArmRobot(Robot):
             else:
                 delta = joint_delta
 
+            # # command position
+            # self._set_position(
+            #     self.last_state.joints() + delta
+            # )
+
             # command position
-            self._set_position(
-                self.last_state.joints() + delta,
-            )
+            self._set_velocity(delta * self._control_frequency)
 
             if gripper_command is not None:
                 set_point = gripper_command
@@ -334,6 +338,20 @@ class XArmRobot(Robot):
         joints = np.concatenate((joints[:2], joints[3:]))
         ###
         ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
+        if ret in [1, 9]:
+            self._clear_error_states()
+
+    def _set_velocity(
+        self,
+        joints: np.ndarray,
+    ) -> None:
+        if self.robot is None:
+            return
+        # threhold xyz to be in  min max
+        ###
+        joints = np.concatenate((joints[:2], joints[3:]))
+        ###
+        ret = self.robot.vc_set_joint_velocity(joints, is_radian=True)
         if ret in [1, 9]:
             self._clear_error_states()
 
